@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<widget id="lowcodelabs.processhierarchywidget.ProcessHierarchyWidget" pluginWidget="true" needsEntityContext="true" offlineCapable="true"
+        supportedPlatform="Web"
+        xmlns="http://www.mendix.com/widget/1.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.mendix.com/widget/1.0/ ../node_modules/mendix/custom_widget.xsd">
+    <name>Process Hierarchy Widget</name>
+    <description>My widget description</description>
+    <icon/>
+    <properties>
+        <propertyGroup caption="Data">
+            <property key="processXML" type="attribute" required="true">
+                <caption>Process XML</caption>
+                <description>Attribute to store the BPMN XML of the process hierarchy</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
+
+            <property key="libraryName" type="attribute" required="false">
+                <caption>Library Name</caption>
+                <description>Display name of the framework</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
+        </propertyGroup>
+
+        <!-- Actions -->
+        <propertyGroup caption="Events">
+            <property key="onProcessClick" type="action" required="false">
+                <caption>On ProcessClick</caption>
+                <description>Action to execute when a process is clicked</description>
+            </property>
+
+            <property key="onSaveXML" type="action" required="false">
+                <caption>On Save XML</caption>
+                <description>Action to execute when the diagram is saved (e.g., commit changes)</description>
+            </property>
+        </propertyGroup>
+
+        <!-- Display settings -->
+        <propertyGroup caption="Display">
+            <property key="readOnly" type="boolean" defaultValue="false">
+                <caption>Read Only</caption>
+                <description>If true, the diagram cannot be edited</description>
+            </property>
+        </propertyGroup>
+    </properties>
+</widget>

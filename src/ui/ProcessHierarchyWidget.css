@@ -1,0 +1,417 @@
+/* Library Hierarchy Widget Styles */
+
+.process-hierarchy-widget {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.process-hierarchy-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #ddd;
+}
+
+.process-hierarchy-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+/* Process icon */
+.entry[data-action="create.process"]::before {
+    content: "🔄";
+    font-size: 24px;
+}
+
+/* Value Chain icon */
+.entry[data-action="create.valuechain"]::before {
+    content: "🔗";
+    font-size: 24px;
+}
+
+
+.bpmn-process-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+/* BPMN.js default styles override */
+.bpmn-process-container .djs-container {
+    background-color: #fafafa !important;
+}
+
+/* Custom library icon in palette */
+.library-icon::before {
+    content: "📚";
+    font-size: 20px;
+}
+
+/* Library element styling */
+.bpmn-process-container .library-icon-group {
+    pointer-events: none;
+}
+
+/* Hover effect for library elements */
+.bpmn-process-container .djs-element.hover .djs-outline {
+    stroke: #4A90E2 !important;
+    stroke-width: 3px !important;
+}
+
+/* Selected library element */
+.bpmn-process-container .djs-element.selected .djs-outline {
+    stroke: #0080ff !important;
+    stroke-width: 3px !important;
+}
+
+/* Custom palette styling */
+.bpmn-process-container .djs-palette {
+    background: #ffffff;
+    border-right: 1px solid #ddd;
+}
+
+.bpmn-process-container .djs-palette .entry {
+    color: #333;
+}
+
+.bpmn-process-container .djs-palette .entry:hover {
+    background-color: #f0f0f0;
+}
+
+/* Connection styling for library hierarchy */
+[data-element-id] > .djs-visual > path {
+    stroke: #4A90E2;
+    stroke-width: 2px;
+}
+
+[data-element-id] > .djs-visual > path:hover {
+    stroke: #0080ff;
+    stroke-width: 3px;
+}
+
+/* Library label styling */
+.bpmn-process-container .djs-label {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    fill: #333;
+}
+
+/* Context pad styling */
+.bpmn-process-container .djs-context-pad {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.bpmn-process-container .djs-context-pad .entry:hover {
+    background-color: #f0f0f0;
+}
+
+/* Minimap styling (if enabled) */
+.bpmn-process-container .djs-minimap {
+    border: 1px solid #ddd;
+    background: white;
+}
+
+/* Loading state */
+.process-hierarchy-widget.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Error state */
+.process-hierarchy-error {
+    padding: 20px;
+    text-align: center;
+    color: #d32f2f;
+    background-color: #ffebee;
+    border: 1px solid #ef5350;
+    border-radius: 4px;
+    margin: 16px;
+}
+
+/* Read-only mode */
+.process-hierarchy-widget[data-readonly="true"] .djs-palette,
+.process-hierarchy-widget[data-readonly="true"] .djs-context-pad {
+    display: none !important;
+}
+
+/* Hide unwanted palette tools */
+.bpmn-process-container .djs-palette .entry[data-action="create.start-event"],
+.bpmn-process-container .djs-palette .entry[data-action="create.intermediate-event"],
+.bpmn-process-container .djs-palette .entry[data-action="create.end-event"],
+.bpmn-process-container.djs-palette .entry[data-action="create.exclusive-gateway"],
+.bpmn-process-container .djs-palette .entry[data-action="create.parallel-gateway"],
+.bpmn-process-container .djs-palette .entry[data-action="create.task"],
+.bpmn-process-container .djs-palette .entry[data-action="create.data-object"],
+.bpmn-process-container .djs-palette .entry[data-action="create.data-store"],
+.bpmn-process-container .djs-palette .entry[data-action="create.subprocess-expanded"],
+.bpmn-process-container .djs-palette .entry[data-action="create.participant-expanded"],
+.bpmn-process-container .djs-palette .entry[data-action="create.group"],
+.bpmn-process-container .djs-palette .entry[data-action="create.exclusive-gateway"] {
+    display: none !important;
+}
+
+/* Also hide their separators if they become orphaned */
+.bpmn-process-container .djs-palette .separator:empty {
+    display: none !important;
+}
+
+
+.bpmn-process-container .djs-palette.two-column.open {
+    width: 60px !important;
+}
+
+/* Palette Header */
+.bpmn-process-container .djs-palette {
+    width: 80px !important;
+}
+
+.bpmn-process-container .djs-palette::before {
+    content: "Toolkit";
+    display: block;
+    padding: 12px 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+    border-bottom: 1px solid #ddd;
+    background: #f8f9fa;
+}
+
+/* Style palette entries to show labels */
+.bpmn-process-container .djs-palette .entry {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    padding: 8px 4px !important;
+    height: auto !important;
+    min-height: 60px !important;
+}
+
+.bpmn-process-container .djs-palette .entry::after {
+    content: attr(title);
+    display: block;
+    font-size: 11px;
+    color: #666;
+    margin-top: 4px;
+    text-align: center;
+    line-height: 1.2;
+}
+
+/* Adjust icon size */
+.bpmn-process-container .djs-palette .entry [class*="bpmn-icon"] {
+    font-size: 24px !important;
+}
+
+/* Custom Library Icon */
+.bpmn-process-container .djs-palette .entry[data-action="create.library"]::before {
+    content: "📚";
+    font-size: 24px;
+    display: block;
+}
+
+
+/* ========================================
+   Remove Subprocess Markers (Plus Icon & Blue Arrow)
+   ======================================== */
+
+/* Hide the plus icon (expand/collapse marker) */
+.bpmn-process-container [data-marker="sub-process-marker"] {
+    display: none !important;
+}
+
+/* Hide the blue navigation arrow at bottom-right */
+.bpmn-process-container .djs-overlay-drilldown {
+    display: none !important;
+}
+
+/* ========================================
+   Context Pad - Keep Only Delete & Connect
+   ======================================== */
+
+/* Hide all context pad entries by default */
+.bpmn-process-container .djs-context-pad .entry {
+    display: none !important;
+}
+
+/* Show only delete and connect */
+.bpmn-process-container .djs-context-pad .entry[data-action="delete"],
+.bpmn-process-container .djs-context-pad .entry[data-action="connect"] {
+    display: block !important;
+}
+
+/* Also hide the append/replace entries if they show up */
+.bpmn-process-container .djs-context-pad .entry[data-action^="append"],
+.bpmn-process-container .djs-context-pad .entry[data-action^="replace"] {
+    display: none !important;
+}
+
+/* Remove the plus icon marker more aggressively */
+.bpmn-process-container [data-marker="sub-process-marker"],
+.bpmn-process-container g[data-marker="sub-process-marker"],
+.bpmn-process-container path[data-marker="sub-process-marker"],
+.bpmn-process-container rect[data-marker="sub-process-marker"] {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* Remove any SVG path that contains the plus icon pattern */
+.bpmn-process-container .djs-element[data-element-id*="SubProcess"] path[d*="M122.5"] {
+    display: none !important;
+}
+
+/* Hide the subprocess marker specifically */
+.bpmn-process-container .djs-visual > g > path[fill="white"][stroke="rgb(34, 36, 42)"] {
+    display: none !important;
+}
+
+/* Remove the subprocess marker square (the empty box where plus icon was) */
+.bpmn-process-container .djs-visual > g > rect[width="14"][height="14"] {
+    display: none !important;
+}
+
+/* More specific - target white filled small rectangles */
+.bpmn-process-container .djs-visual > g > rect[width="14"][height="14"][fill="white"] {
+    display: none !important;
+}
+
+/* Also hide any rect with stroke rgb(34, 36, 42) and small size */
+.bpmn-process-container .djs-visual rect[width="14"][height="14"][rx="0"] {
+    display: none !important;
+}
+
+/* Target by transform attribute if it has the marker position */
+.bpmn-process-container .djs-visual > g > rect[transform*="122.5"] {
+    display: none !important;
+}
+
+/* Button container */
+.header-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+/* Download button styling */
+.btn-download, .btn-save {
+    padding: 6px 12px;
+    color: #2d2d2d;
+    border: 1px solid #2d2d2d;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top:4px;
+    height:28px;
+    display: flex;
+    align-items: center;
+}
+
+/* === Pixel Perfect Compact Alert === */
+.validation-error-overlay {
+    position: absolute;
+    bottom: 32px;
+    right: 20px;
+
+    width: 220px; /* fixed width like screenshot */
+    background: #f7931e;
+    color: #ffffff;
+
+    padding: 8px 14px;
+    border-radius: 12px;
+
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
+    z-index: 1000;
+
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    animation: slideUp 0.25s ease-out;
+}
+
+/* Header row */
+.validation-error-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+/* Warning icon */
+.validation-error-header .icon {
+    font-size: 18px;
+    line-height: 1;
+}
+
+/* Content text */
+.validation-error-content {
+    font-size: 13px;
+    line-height: 1.5;
+    font-weight: 400;
+}
+
+/* Close button */
+.validation-error-close {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+
+    background: transparent;
+    border: none;
+    color: white;
+
+    font-size: 18px;
+    font-weight: 300;
+    cursor: pointer;
+    opacity: 0.9;
+}
+
+.validation-error-close:hover {
+    opacity: 1;
+}
+
+/* Process icon */
+.entry[data-action="create.process"]::before {
+    content: "🔄";
+    font-size: 24px;
+}
+
+/* Value Chain icon */
+.entry[data-action="create.valuechain"]::before {
+    content: "🔗";
+    font-size: 24px;
+}
+/* Animation */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .process-hierarchy-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .btn-save {
+        width: 100%;
+    }
+}

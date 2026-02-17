@@ -1,0 +1,46 @@
+{
+  "name": "processhierarchywidget",
+  "widgetName": "ProcessHierarchyWidget",
+  "version": "1.0.0",
+  "description": "My widget description",
+  "copyright": "© Mendix Technology BV 2026. All rights reserved.",
+  "author": "Muthahar Shaik",
+  "engines": {
+    "node": ">=16"
+  },
+  "license": "Apache-2.0",
+  "config": {
+    "projectPath": "./tests/testProject",
+    "mendixHost": "http://localhost:8080",
+    "developmentPort": 3000
+  },
+  "packagePath": "lowcodelabs",
+  "scripts": {
+    "start": "pluggable-widgets-tools start:server",
+    "dev": "pluggable-widgets-tools start:web",
+    "build": "pluggable-widgets-tools build:web",
+    "lint": "pluggable-widgets-tools lint",
+    "lint:fix": "pluggable-widgets-tools lint:fix",
+    "prerelease": "npm run lint",
+    "release": "pluggable-widgets-tools release:web"
+  },
+  "devDependencies": {
+    "@mendix/pluggable-widgets-tools": "^11.3.1"
+  },
+  "dependencies": {
+    "bpmn-js": "^18.12.0",
+    "classnames": "^2.2.6",
+    "diagram-js": "^15.9.1",
+    "tiny-svg": "^4.1.4"
+  },
+  "resolutions": {
+    "react": "^18.2.0",
+    "react-dom": "18.2.0",
+    "react-native": "0.72.7"
+  },
+  "overrides": {
+    "react": "^18.2.0",
+    "react-dom": "18.2.0",
+    "react-native": "0.72.7"
+  }
+}
