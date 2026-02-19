@@ -18,12 +18,13 @@ class CustomProcessRules extends RuleProvider {
 
         // Allow connections between processes
         this.addRule("connection.create", (context) => {
-            const source = context.source;
-            const target = context.target;
+            const { source, target } = context;
 
-            // Only allow connections between SubProcesses (processes)
-            if (is(source, "bpmn:SubProcess") && is(target, "bpmn:SubProcess")) {
-                return { type: 'bpmn:SequenceFlow' };
+            if (
+                is(source, "bpmn:SubProcess") &&
+                is(target, "bpmn:SubProcess")
+            ) {
+                return { type: "bpmn:SequenceFlow" };
             }
 
             return false;
@@ -31,16 +32,21 @@ class CustomProcessRules extends RuleProvider {
 
         // Allow connection reconnection
         this.addRule("connection.reconnect", (context) => {
-            const connection = context.connection;
-            const source = context.source || connection.source;
-            const target = context.target || connection.target;
+            const { connection, source, target } = context;
 
-            if (is(source, "bpmn:SubProcess") && is(target, "bpmn:SubProcess")) {
+            const newSource = source || connection.source;
+            const newTarget = target || connection.target;
+
+            if (
+                is(newSource, "bpmn:SubProcess") &&
+                is(newTarget, "bpmn:SubProcess")
+            ) {
                 return true;
             }
 
             return false;
         });
+
 
         // Restrict what can be added from palette
         this.addRule("shape.create", (context) => {

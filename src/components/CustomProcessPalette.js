@@ -28,8 +28,8 @@ class CustomProcessPalette {
                 const shape = elementFactory.createShape({
                     type: "bpmn:SubProcess",
                     businessObject: businessObject,
-                    width: 260,
-                    height: 60
+                    width: 100,
+                    height: 80
                 });
 
                 create.start(event, shape);

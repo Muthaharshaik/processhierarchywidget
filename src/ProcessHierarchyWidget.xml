@@ -23,6 +23,14 @@
                     <attributeType name="String"/>
                 </attributeTypes>
             </property>
+
+            <property key="clickedProcessId" type="attribute" required="false">
+                <caption>Clicked Process ID</caption>
+                <description>Stores the process:processId of the clicked process</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
         </propertyGroup>
 
         <!-- Actions -->

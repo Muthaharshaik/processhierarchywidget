@@ -2,7 +2,7 @@
 
 .process-hierarchy-widget {
     width: 100%;
-    height: 100vh;
+    height: calc(100vh - 180px);
     display: flex;
     flex-direction: column;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -292,28 +292,40 @@
 .bpmn-process-container .djs-visual > g > rect[transform*="122.5"] {
     display: none !important;
 }
+/* Hide SubProcess collapse (+) marker */
+.bpmn-process-container path[data-marker="sub-process"] {
+    display: none !important;
+}
 
+/* Hide the small white background box behind + */
+.bpmn-process-container .djs-visual > rect[width="14"][height="14"] {
+    display: none !important;
+}
 /* Button container */
-.header-buttons {
+.process-hierarchy-widget .header-buttons {
     display: flex;
     gap: 8px;
 }
 
 /* Download button styling */
-.btn-download, .btn-save {
+.process-hierarchy-widget .btn-download,
+.process-hierarchy-widget .btn-save,
+.process-hierarchy-widget .btn-change {
     padding: 6px 12px;
-    color: #2d2d2d;
+    color: #2d2d22;
     border: 1px solid #2d2d2d;
     border-radius: 4px;
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s;
-    margin-top:4px;
-    height:28px;
+    margin-top: 4px;
+    height: 28px;
     display: flex;
     align-items: center;
+    background-color: #fff;
 }
+
 
 /* === Pixel Perfect Compact Alert === */
 .validation-error-overlay {

@@ -1,14 +1,17 @@
-import { createElement, useEffect, useRef, useCallback } from "react";
+import { createElement, useEffect, useRef, useCallback, useState} from "react";
 import BpmnModeler from "bpmn-js/lib/Modeler";
 import { is } from "bpmn-js/lib/util/ModelUtil";
 import "./ui/ProcessHierarchyWidget.css";
 import downloadIcon from "./assets/download-svgrepo-com.svg"
 import saveIcon from "./assets/save-svgrepo-com.svg"
+import undoIcon from "./assets/undo-svgrepo-com.svg"
+import redoIcon from "./assets/redo-svgrepo-com.svg"
 
 export function ProcessHierarchyWidget(props) {
     const {
         processXML,
         libraryName,
+        clickedProcessId,
         onProcessClick,
         onSaveXML,
         readOnly
@@ -17,6 +20,8 @@ export function ProcessHierarchyWidget(props) {
     const containerRef = useRef(null);
     const modelerRef = useRef(null);
     const lastImportedXmlRef = useRef(null);
+    const actionRef = useRef(null); 
+    const [pendingProcessId, setPendingProcessId] = useState(null);
 
     const generateDefaultXML = (name) => {
         const libraryNameValue = name || "Library Root";
@@ -39,12 +44,38 @@ export function ProcessHierarchyWidget(props) {
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
       <bpmndi:BPMNShape id="SubProcess_Root_di" bpmnElement="SubProcess_Root">
-        <dc:Bounds x="200" y="100" width="260" height="60"/>
+        <dc:Bounds x="200" y="100" width="100" height="80"/>
       </bpmndi:BPMNShape>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>`;
     };
+
+    useEffect(() => {
+        if (pendingProcessId && 
+            clickedProcessId && 
+            clickedProcessId.status === "available") {
+            
+            console.info('Setting pending process ID:', pendingProcessId);
+            clickedProcessId.setValue(pendingProcessId);
+            
+            // Execute action using actionRef
+            setTimeout(() => {
+                if (actionRef.current && actionRef.current.canExecute) {
+                    console.info('Executing action for process:', pendingProcessId);
+                    actionRef.current.execute();
+                }
+                // Clear pending
+                setPendingProcessId(null);
+            }, 100);
+        }
+    }, [pendingProcessId, clickedProcessId?.status]);
+
+    useEffect(() => {
+        actionRef.current = onProcessClick;
+    }, [onProcessClick]);
+
+
 
     /**
      * Initialize the BPMN Modeler with custom modules
@@ -92,13 +123,28 @@ export function ProcessHierarchyWidget(props) {
                 const eventBus = modeler.get("eventBus");
                 
                 // Listen for element clicks (process selection)
-                eventBus.on("element.click", (event) => {
+                eventBus.on("element.dblclick", (event) => {
                     const { element } = event;
+                    
                     if (is(element, "bpmn:SubProcess") && 
                         element.businessObject.get("process:processId")) {
-                        if (onProcessClick && onProcessClick.canExecute) {
-                            onProcessClick.execute();
-                        }
+                            const commandStack = modeler.get("commandStack");
+                            const isDirty = commandStack.canUndo();
+
+                            if (isDirty) {
+                                showUnsavedWarning();
+                                return; // 🚫 block navigation
+                            }
+                        
+                        const processId = element.businessObject.get("process:processId");
+
+                        const directEditing = modeler.get("directEditing");
+                        directEditing.cancel();
+
+                        console.info('Process double-clicked:', processId);
+                        
+                        // Set pending - useEffect will handle execution
+                        setPendingProcessId(processId);
                     }
                 });
 
@@ -275,6 +321,50 @@ export function ProcessHierarchyWidget(props) {
         };
     }, []);
 
+     /**
+     * Handle Undo
+     */
+    const handleUndo = useCallback(() => {
+        if (!modelerRef.current) return;
+        const commandStack = modelerRef.current.get('commandStack');
+        if (commandStack.canUndo()) {
+            commandStack.undo()
+        }
+    },[])
+
+    /**
+     * Handle Redo
+     */
+    const handleRedo = useCallback(() => {
+        if (!modelerRef.current) return;
+
+        const commandStack = modelerRef.current.get('commandStack');
+        if (commandStack.canRedo()) {
+            commandStack.redo();
+        }
+    }, []);
+
+    const showUnsavedWarning = () => {
+    if (!containerRef.current) return;
+
+    const overlay = document.createElement("div");
+    overlay.className = "validation-error-overlay";
+    overlay.innerHTML = `
+        <div class="validation-error-header">
+            <span>⚠️ Unsaved Changes</span>
+        </div>
+        <div class="validation-error-content">
+            Please save the library before opening a processmap.
+        </div>
+    `;
+
+    containerRef.current.appendChild(overlay);
+
+    setTimeout(() => {
+        overlay.remove();
+    }, 5000);
+};
+
     /**
      * Download current diagram as BPMN file
      */
@@ -325,6 +415,22 @@ export function ProcessHierarchyWidget(props) {
                                 Save
                             </span>
                         </button>
+                        <button
+                           className="btn-change"
+                           onClick={handleUndo}
+                           title="Undo"
+                        >
+                            <img src={undoIcon} alt="Undo Changes" style={{width:'16px', height:'16px'}}/>
+                        </button>
+
+                        <button
+                           className="btn-change"
+                           onClick={handleRedo}
+                           title="Redo"
+                        >
+                            <img src={redoIcon} alt="Redo Changes" style={{width:'16px', height:'16px'}}/>
+                        </button>
+
                         <button 
                             className="btn-download"
                             onClick={downloadBPMN}
