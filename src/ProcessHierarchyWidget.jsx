@@ -14,7 +14,9 @@ export function ProcessHierarchyWidget(props) {
         clickedProcessId,
         onProcessClick,
         onSaveXML,
-        readOnly
+        readOnly,
+        currentUserEmail,      // ⭐ ADD
+        lockedUserEmail        // ⭐ ADD
     } = props;
 
     const containerRef = useRef(null);
@@ -22,6 +24,35 @@ export function ProcessHierarchyWidget(props) {
     const lastImportedXmlRef = useRef(null);
     const actionRef = useRef(null); 
     const [pendingProcessId, setPendingProcessId] = useState(null);
+    // const initialSaveDoneRef = useRef(false);
+
+ const isLockedByAnotherUser = useCallback(() => {
+    // Wait for values to load
+    if (currentUserEmail?.status === "loading" || 
+        lockedUserEmail?.status === "loading") {
+        return true; // Block while loading
+    }
+
+    // ✅ NEW LOGIC: If no one is checked out (empty), EVERYONE is read-only
+    if (!lockedUserEmail?.value || !lockedUserEmail.value.trim()) {
+        return true; // No checkout = read-only for all
+    }
+    
+    // If current user email not available, block
+    if (!currentUserEmail?.value || !currentUserEmail.value.trim()) {
+        return true;
+    }
+    
+    // Compare emails - only the checked-out user can edit
+    const currentEmail = currentUserEmail.value.toLowerCase().trim();
+    const lockedEmail = lockedUserEmail.value.toLowerCase().trim();
+    
+    // If current user IS the checked-out user, they can edit
+    return currentEmail !== lockedEmail;
+}, [currentUserEmail?.value, currentUserEmail?.status, 
+    lockedUserEmail?.value, lockedUserEmail?.status]);
+    // ⭐ ADD: Computed readonly state
+    const isReadOnly = readOnly || isLockedByAnotherUser();
 
     const generateDefaultXML = (name) => {
         const libraryNameValue = name || "Library Root";
@@ -59,13 +90,11 @@ export function ProcessHierarchyWidget(props) {
             console.info('Setting pending process ID:', pendingProcessId);
             clickedProcessId.setValue(pendingProcessId);
             
-            // Execute action using actionRef
             setTimeout(() => {
                 if (actionRef.current && actionRef.current.canExecute) {
                     console.info('Executing action for process:', pendingProcessId);
                     actionRef.current.execute();
                 }
-                // Clear pending
                 setPendingProcessId(null);
             }, 100);
         }
@@ -75,15 +104,9 @@ export function ProcessHierarchyWidget(props) {
         actionRef.current = onProcessClick;
     }, [onProcessClick]);
 
-
-
-    /**
-     * Initialize the BPMN Modeler with custom modules
-     */
     useEffect(() => {
         if (!containerRef.current) return;
 
-        // Destroy existing modeler if any
         if (modelerRef.current) {
             modelerRef.current.destroy();
             modelerRef.current = null;
@@ -105,7 +128,7 @@ export function ProcessHierarchyWidget(props) {
 
         modelerRef.current = modeler;
 
-        // Import initial XML
+        const isFirstTimeLoad = !processXML?.value || processXML.value.trim() === '';
         const xmlToLoad = processXML?.value || generateDefaultXML(libraryName?.value);
         lastImportedXmlRef.current = xmlToLoad;
 
@@ -118,64 +141,97 @@ export function ProcessHierarchyWidget(props) {
 
                 const canvas = modeler.get("canvas");
                 canvas.zoom("fit-viewport");
+                // // ⭐ AUTO-SAVE: If this is the first load and XML was generated (not loaded)
+                // if (isFirstTimeLoad && 
+                //     !initialSaveDoneRef.current && 
+                //     onSaveXML && 
+                //     onSaveXML.canExecute) {
+                    
+                //     console.info("First time load - auto-saving initial process hierarchy XML");
+                    
+                //     modeler.saveXML({ format: true })
+                //         .then(({ xml }) => {
+                //             processXML?.setValue(xml);
+                //             onSaveXML.execute();
+                //             initialSaveDoneRef.current = true; // Mark as saved
+                //             console.info("Initial process hierarchy XML auto-saved successfully");
+                //         })
+                //         .catch(err => {
+                //             console.error("Error auto-saving initial XML:", err);
+                //         });
+                // }
 
-                // Set up event listeners
+                // ⭐ ADD: Disable editing if locked
+                if (isReadOnly) {
+                    const eventBus = modeler.get('eventBus');
+                    
+                    eventBus.on('commandStack.execute', 10000, (event) => {
+                        if (isReadOnly) {
+                            event.stopPropagation();
+                            return false;
+                        }
+                    });
+                }
+
                 const eventBus = modeler.get("eventBus");
+
+                // ⭐ Unsaved warning
+                eventBus.on('process.unsaved-warning', () => {
+                    showUnsavedWarning();
+                });
+                // ⭐ Context pad navigation
+                eventBus.on('process.open', (event) => {
+                    const processId = event?.processId;
+
+                    if (!processId) return;
+
+                    console.info("Context pad → Go to Process:", processId);
+                    setPendingProcessId(processId);
+                });
                 
-                // Listen for element clicks (process selection)
+                // ⭐ UPDATED: Double-click behavior
                 eventBus.on("element.dblclick", (event) => {
                     const { element } = event;
                     
                     if (is(element, "bpmn:SubProcess") && 
                         element.businessObject.get("process:processId")) {
-                            const commandStack = modeler.get("commandStack");
-                            const isDirty = commandStack.canUndo();
 
-                            if (isDirty) {
-                                showUnsavedWarning();
-                                return; // 🚫 block navigation
-                            }
+                        // If user CAN edit, allow inline editing
+                        if (!isReadOnly) {
+                            const directEditing = modeler.get("directEditing");
+                            directEditing.activate(element);
+                            return;
+                        }
+
+                        // If user CANNOT edit, navigate
+                        event.stopPropagation();
+                        event.preventDefault();
                         
-                        const processId = element.businessObject.get("process:processId");
-
                         const directEditing = modeler.get("directEditing");
                         directEditing.cancel();
-
-                        console.info('Process double-clicked:', processId);
                         
-                        // Set pending - useEffect will handle execution
+                        const processId = element.businessObject.get("process:processId");
+                        console.info('Process double-clicked (read-only):', processId);
                         setPendingProcessId(processId);
                     }
                 });
-
-                // Listen for changes to auto-save
-                if (onSaveXML && onSaveXML.canExecute && !readOnly) {
-                    eventBus.on("commandStack.changed", () => {
-                        exportAndSaveXML();
-                    });
-                }
             })
             .catch(err => {
                 console.error("Error importing BPMN diagram:", err);
             });
 
-        // Cleanup on unmount
         return () => {
             if (modelerRef.current) {
                 modelerRef.current.destroy();
             }
         };
-    }, []); // Run once on mount
+    }, [isReadOnly]); // ⭐ ADD: dependency
 
-    /**
-     * Update root process name when libraryName changes
-     */
     useEffect(() => {
         if (!modelerRef.current) return;
         if (!libraryName?.value) return;
-        if (processXML?.value) return; // Don't override if XML already exists
+        if (processXML?.value) return;
 
-        // Update the root process name
         const elementRegistry = modelerRef.current.get('elementRegistry');
         const modeling = modelerRef.current.get('modeling');
         const rootElement = elementRegistry.get('SubProcess_Root');
@@ -188,14 +244,10 @@ export function ProcessHierarchyWidget(props) {
         }
     }, [libraryName?.value, processXML?.value]);
 
-    /**
-     * Handle XML updates from Mendix
-     */
     useEffect(() => {
         if (!modelerRef.current) return;
         if (!processXML?.value) return;
 
-        // Skip if XML hasn't changed
         if (processXML.value === lastImportedXmlRef.current) {
             return;
         }
@@ -214,19 +266,13 @@ export function ProcessHierarchyWidget(props) {
             });
     }, [processXML?.value]);
 
-    /**
-     * Validate diagram before saving
-     */
     const validateDiagram = useCallback(() => {
         if (!modelerRef.current) return { valid: true, errors: [] };
 
         const elementRegistry = modelerRef.current.get('elementRegistry');
         const errors = [];
-        
-        // Get all elements
         const allElements = elementRegistry.getAll();
         
-        // Check each process for multiple parents
         allElements.forEach(element => {
             if (is(element, 'bpmn:SubProcess') && 
                 element.businessObject.get('process:processId')) {
@@ -245,13 +291,10 @@ export function ProcessHierarchyWidget(props) {
         };
     }, []);
 
-    /**
-     * Export current diagram as XML and save to Mendix
-     */
     const exportAndSaveXML = useCallback(() => {
         if (!modelerRef.current || !onSaveXML || !onSaveXML.canExecute) return;
+        if (isReadOnly) return; // ⭐ ADD
 
-        // Validate before saving
         const validation = validateDiagram();
         
         if (!validation.valid) {
@@ -268,19 +311,14 @@ export function ProcessHierarchyWidget(props) {
             .catch(err => {
                 console.error("Error exporting BPMN XML:", err);
             });
-    }, [processXML, onSaveXML, validateDiagram]);
+    }, [processXML, onSaveXML, validateDiagram, isReadOnly]); // ⭐ ADD dependency
 
-    /**
-     * Show validation errors
-     */
     const showValidationError = useCallback((errors) => {
         if (!containerRef.current) return;
         
-        // Remove existing error messages
         const existingErrors = containerRef.current.querySelectorAll('.validation-error-overlay');
         existingErrors.forEach(error => error.remove());
         
-        // Create error overlay
         const overlay = document.createElement('div');
         overlay.className = 'validation-error-overlay';
         
@@ -314,75 +352,60 @@ export function ProcessHierarchyWidget(props) {
             overlay.remove();
         }, 4000);
         
-        // Clear timer if manually closed
         closeButton.onclick = () => {
             clearTimeout(timeout);
             overlay.remove();
         };
     }, []);
 
-     /**
-     * Handle Undo
-     */
     const handleUndo = useCallback(() => {
-        if (!modelerRef.current) return;
+        if (!modelerRef.current || isReadOnly) return; // ⭐ ADD check
         const commandStack = modelerRef.current.get('commandStack');
         if (commandStack.canUndo()) {
-            commandStack.undo()
+            commandStack.undo();
         }
-    },[])
+    }, [isReadOnly]); // ⭐ ADD dependency
 
-    /**
-     * Handle Redo
-     */
     const handleRedo = useCallback(() => {
-        if (!modelerRef.current) return;
-
+        if (!modelerRef.current || isReadOnly) return; // ⭐ ADD check
         const commandStack = modelerRef.current.get('commandStack');
         if (commandStack.canRedo()) {
             commandStack.redo();
         }
-    }, []);
+    }, [isReadOnly]); // ⭐ ADD dependency
 
     const showUnsavedWarning = () => {
-    if (!containerRef.current) return;
+        if (!containerRef.current) return;
 
-    const overlay = document.createElement("div");
-    overlay.className = "validation-error-overlay";
-    overlay.innerHTML = `
-        <div class="validation-error-header">
-            <span>⚠️ Unsaved Changes</span>
-        </div>
-        <div class="validation-error-content">
-            Please save the library before opening a processmap.
-        </div>
-    `;
+        const overlay = document.createElement("div");
+        overlay.className = "validation-error-overlay";
+        overlay.innerHTML = `
+            <div class="validation-error-header">
+                <span>⚠️ Unsaved Changes</span>
+            </div>
+            <div class="validation-error-content">
+                Please save the library before opening a processmap.
+            </div>
+        `;
 
-    containerRef.current.appendChild(overlay);
+        containerRef.current.appendChild(overlay);
 
-    setTimeout(() => {
-        overlay.remove();
-    }, 5000);
-};
+        setTimeout(() => {
+            overlay.remove();
+        }, 5000);
+    };
 
-    /**
-     * Download current diagram as BPMN file
-     */
     const downloadBPMN = useCallback(() => {
         if (!modelerRef.current) return;
 
         modelerRef.current
             .saveXML({ format: true })
             .then(({ xml }) => {
-                // Create a blob from the XML
                 const blob = new Blob([xml], { type: 'application/bpmn+xml' });
-                
-                // Create download link
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
                 
-                // Use library name for filename, or default
                 const fileName = libraryName?.value 
                     ? `${libraryName.value.replace(/\s+/g, '_')}_Process_Hierarchy.bpmn`
                     : 'Process_Hierarchy.bpmn';
@@ -390,8 +413,6 @@ export function ProcessHierarchyWidget(props) {
                 link.download = fileName;
                 document.body.appendChild(link);
                 link.click();
-                
-                // Cleanup
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
             })
@@ -400,12 +421,14 @@ export function ProcessHierarchyWidget(props) {
             });
     }, [libraryName]);
 
-    return (
-        <div className="process-hierarchy-widget">
-            <div className="process-hierarchy-header">
-                <h3>{libraryName?.value || "Process Hierarchy"}</h3>
-                {!readOnly && (
-                    <div className="header-buttons">
+return (
+    <div className="process-hierarchy-widget" data-locked={isLockedByAnotherUser()}>
+        <div className="process-hierarchy-header">
+            <h3>{libraryName?.value || "Process Hierarchy"}</h3>
+            
+            <div className="header-buttons">
+                {!isReadOnly && (
+                    <div className="editable-buttons">
                         <button 
                             className="btn-save"
                             onClick={exportAndSaveXML}
@@ -430,29 +453,32 @@ export function ProcessHierarchyWidget(props) {
                         >
                             <img src={redoIcon} alt="Redo Changes" style={{width:'16px', height:'16px'}}/>
                         </button>
-
-                        <button 
-                            className="btn-download"
-                            onClick={downloadBPMN}
-                        >
-                            <span>
-                                <img src={downloadIcon} alt="DownloadBPMN" style={{width:'18px',height:'18px'}}></img>
-                                Download BPMN
-                            </span>
-                        </button>
                     </div>
                 )}
+
+                {/* Download button - always visible */}
+                <button 
+                    className="btn-download"
+                    onClick={downloadBPMN}
+                >
+                    <span>
+                        <img src={downloadIcon} alt="DownloadBPMN" style={{width:'18px',height:'18px'}}></img>
+                        Download BPMN
+                    </span>
+                </button>
             </div>
-            <div 
-                ref={containerRef} 
-                className="bpmn-process-container"
-                style={{ 
-                    height: "600px", 
-                    width: "100%",
-                    border: "1px solid #ccc",
-                    backgroundColor: "#fafafa"
-                }}
-            />
         </div>
-    );
+        <div 
+            ref={containerRef} 
+            className="bpmn-process-container"
+            style={{ 
+                height: "600px", 
+                width: "100%",
+                border: "1px solid #ccc",
+                backgroundColor: "#fafafa",
+                opacity: isLockedByAnotherUser() ? 0.7 : 1
+            }}
+        />
+    </div>
+);
 }

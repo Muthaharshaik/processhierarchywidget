@@ -31,6 +31,20 @@
                     <attributeType name="String"/>
                 </attributeTypes>
             </property>
+
+            <property key="currentUserEmail" type="expression" required="true">
+                <caption>Current User Email</caption>
+                <description>Current user Email</description>
+                <returnType type="String"/>
+            </property>
+
+            <property key="lockedUserEmail" type="attribute" required="false">
+                <caption>Locked User Email</caption>
+                <description>Locked user email</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
         </propertyGroup>
 
         <!-- Actions -->

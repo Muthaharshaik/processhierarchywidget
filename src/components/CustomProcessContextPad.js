@@ -1,15 +1,27 @@
+import { is } from 'bpmn-js/lib/util/ModelUtil';
+
 class CustomProcessContextPad {
-    constructor(contextPad, modeling, connect) {
+    constructor(contextPad, modeling, connect, eventBus, commandStack) {
         this.modeling = modeling;
         this.connect = connect;
-        
+        this.eventBus = eventBus;
+        this.commandStack = commandStack;
+
         contextPad.registerProvider(1100, this);
     }
 
     getContextPadEntries(element) {
-        const { modeling, connect } = this;
+        const { modeling, connect, eventBus, commandStack } = this;
 
-        if (element.type !== 'bpmn:SubProcess') {
+        if (!is(element, 'bpmn:SubProcess') ||
+            !element.businessObject.get('process:processId')) {
+            return {};
+        }
+
+        const widgetContainer = document.querySelector('.process-hierarchy-widget');
+        const isLocked = widgetContainer?.getAttribute('data-locked') === 'true';
+
+        if (isLocked) {
             return {};
         }
 
@@ -24,6 +36,7 @@ class CustomProcessContextPad {
                     }
                 }
             },
+
             'delete': {
                 group: 'edit',
                 className: 'bpmn-icon-trash',
@@ -33,12 +46,43 @@ class CustomProcessContextPad {
                         modeling.removeElements([element]);
                     }
                 }
+            },
+
+            'open-process': {
+                group: 'edit',
+                className: 'custom-open-process-icon',
+                title: 'Go to Process',
+                action: {
+                    click: function(event, element) {
+
+                        const isDirty = commandStack.canUndo();
+
+                        if (isDirty) {
+                            eventBus.fire('process.unsaved-warning');
+                            return;
+                        }
+
+                        const processId = element.businessObject.get('process:processId');
+
+                        if (processId) {
+                            eventBus.fire('process.open', {
+                                processId: processId
+                            });
+                        }
+                    }
+                }
             }
         };
     }
 }
 
-CustomProcessContextPad.$inject = ['contextPad', 'modeling', 'connect'];
+CustomProcessContextPad.$inject = [
+    'contextPad',
+    'modeling',
+    'connect',
+    'eventBus',
+    'commandStack'
+];
 
 export default {
     __init__: ['customProcessContextPad'],

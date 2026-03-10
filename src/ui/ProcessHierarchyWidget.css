@@ -34,7 +34,10 @@
     content: "🔗";
     font-size: 24px;
 }
-
+.editable-buttons {
+    display: flex;
+    gap: 8px;
+}
 
 .bpmn-process-container {
     flex: 1;
@@ -244,7 +247,9 @@
 
 /* Show only delete and connect */
 .bpmn-process-container .djs-context-pad .entry[data-action="delete"],
-.bpmn-process-container .djs-context-pad .entry[data-action="connect"] {
+.bpmn-process-container .djs-context-pad .entry[data-action="connect"],
+.bpmn-process-container .djs-context-pad .entry[data-action="open-process"]
+ {
     display: block !important;
 }
 
@@ -401,6 +406,27 @@
 .entry[data-action="create.valuechain"]::before {
     content: "🔗";
     font-size: 24px;
+}
+
+/* Hide palette and context pad when locked */
+.process-hierarchy-widget[data-locked="true"] .djs-palette {
+    display: none !important;
+}
+
+.process-hierarchy-widget[data-locked="true"] .djs-context-pad {
+    display: none !important;
+}
+
+/* Disable pointer events when locked */
+.process-hierarchy-widget[data-locked="true"] .bpmn-process-container {
+    pointer-events: none;
+    opacity: 0.8;
+    cursor: not-allowed;
+}
+
+.custom-open-process-icon::before {
+    content: "🔄";
+    font-size: 14px;
 }
 /* Animation */
 @keyframes slideUp {
