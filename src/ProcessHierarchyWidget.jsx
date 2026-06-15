@@ -474,8 +474,8 @@ return (
             style={{ 
                 height: "600px", 
                 width: "100%",
-                border: "1px solid #ccc",
-                backgroundColor: "#fafafa",
+                border: "1px solid #dde1ea",
+                backgroundColor: "#eef0f5",
                 opacity: isLockedByAnotherUser() ? 0.7 : 1
             }}
         />
