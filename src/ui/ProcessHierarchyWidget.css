@@ -19,6 +19,8 @@
     flex-direction: column;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     background: var(--phw-bg);
+    border: 1px solid var(--phw-border);
+    border-radius: 4px;
 }
 
 /* ── Header ── */
@@ -27,8 +29,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 16px;
-    background-color: var(--phw-header-bg);
-    border-bottom: 1px solid var(--phw-border);
+    background-color: #eeefff;
+    border-bottom: 1.5px solid #eeefff;
 }
 
 .process-hierarchy-header h3 {
