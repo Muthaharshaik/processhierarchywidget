@@ -36,7 +36,9 @@ class CustomProcessRenderer extends BaseRenderer {
     drawShape(parentNode, element) {
         const { width, height } = element;
         const bo          = element.businessObject;
-        const processName = bo.get("process:processName") || bo.name || "";
+        // bo.name is the live label (direct editing writes it) — prefer it over
+        // the process:processName attribute, which is only a persisted mirror.
+        const processName = bo.name || bo.get("process:processName") || "";
         const processType = bo.get("process:processType") || "process";
         const processId   = bo.get("process:processId")   || "";
         const isRoot      = processId === "root";

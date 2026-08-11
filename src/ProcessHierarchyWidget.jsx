@@ -292,7 +292,8 @@ const refreshOverlays = useCallback((modeler) => {
                 require("./components/CustomProcessPalette"),
                 require("./components/CustomProcessRenderer"),
                 require("./components/CustomProcessRules"),
-                require("./components/CustomProcessContextPad")
+                require("./components/CustomProcessContextPad"),
+                require("./components/CustomProcessNameSync")
             ],
             moddleExtensions: {
                 process: require("./components/processModdle").processModdle
