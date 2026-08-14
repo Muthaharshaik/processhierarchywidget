@@ -13,6 +13,7 @@
 
 /* ── Widget wrapper ── */
 .process-hierarchy-widget {
+    position: relative;   /* anchors .import-confirm-backdrop */
     width: 100%;
     height: calc(100vh - 180px);
     display: flex;
@@ -394,6 +395,94 @@
     color: white; font-size: 18px; cursor: pointer; opacity: 0.9;
 }
 .validation-error-close:hover { opacity: 1; }
+
+/* Import result — informational, not a warning */
+.validation-error-overlay.info {
+    background: #1e2d4a;
+    width: 280px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   IMPORT CONFIRMATION DIALOG
+   ══════════════════════════════════════════════════════════ */
+.import-confirm-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(30, 45, 74, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+}
+
+.import-confirm {
+    width: 380px;
+    max-width: calc(100% - 32px);
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(30, 45, 74, 0.28);
+    overflow: hidden;
+    animation: phw-slideUp 0.2s ease-out;
+}
+
+.import-confirm-title {
+    padding: 14px 18px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--phw-text-dark);
+    border-bottom: 1px solid var(--phw-border);
+}
+
+.import-confirm-body {
+    padding: 16px 18px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--phw-text-dark);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.import-confirm-file {
+    font-weight: 600;
+    word-break: break-all;
+    color: #1e2d4a;
+}
+
+.import-confirm-warn {
+    color: var(--phw-text-muted);
+    font-size: 12px;
+}
+
+.import-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 18px 16px;
+}
+
+.import-confirm-actions button {
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s, box-shadow 0.15s;
+}
+
+.import-btn-cancel {
+    background: #ffffff;
+    color: var(--phw-text-dark);
+    border: 1px solid var(--phw-border);
+}
+.import-btn-cancel:hover { background: #f3f5f9; }
+
+.import-btn-confirm {
+    background: var(--phw-accent);
+    color: #ffffff;
+    border: 1px solid var(--phw-accent);
+}
+.import-btn-confirm:hover { background: #249c9c; }
 
 /* ── States ── */
 .process-hierarchy-widget.loading { opacity: 0.6; pointer-events: none; }
