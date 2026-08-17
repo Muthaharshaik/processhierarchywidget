@@ -289,7 +289,7 @@
     flex-direction: row !important;
     gap: 4px !important;
     padding: 4px !important;
-    width:100px !important;
+    width: fit-content !important;
 }
 .bpmn-process-container .djs-context-pad .group {
     display: flex !important; flex-direction: row !important; gap: 4px !important;
@@ -300,6 +300,8 @@
 }
 .bpmn-process-container .djs-context-pad .entry[data-action="delete"],
 .bpmn-process-container .djs-context-pad .entry[data-action="connect"],
+.bpmn-process-container .djs-context-pad .entry[data-action="append-process"],
+.bpmn-process-container .djs-context-pad .entry[data-action="append-valuechain"],
 .bpmn-process-container .djs-context-pad .entry[data-action="open-process"] {
     display: flex !important;
     align-items: center !important;
@@ -308,7 +310,8 @@
     height: 28px !important;
     border-radius: 6px !important;
 }
-.bpmn-process-container .djs-context-pad .entry[data-action^="append"],
+/* Hide bpmn-js' own append-* / replace-* entries — but not our own appends. */
+.bpmn-process-container .djs-context-pad .entry[data-action^="append"]:not([data-action="append-process"]):not([data-action="append-valuechain"]),
 .bpmn-process-container .djs-context-pad .entry[data-action^="replace"] { display: none !important; }
 .bpmn-process-container .djs-context-pad .entry:hover {
     background-color: #f3f5f9;
@@ -326,9 +329,39 @@
     background-color: #2cb5b5 !important;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'/%3E%3Cpolyline points='15 3 21 3 21 9'/%3E%3Cline x1='10' y1='14' x2='21' y2='3'/%3E%3C/svg%3E") !important;
 }
+/* Add process — card with a plus */
+.bpmn-process-container .djs-context-pad .entry[data-action="append-process"] {
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: 18px 18px !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232cb5b5' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='14' rx='2'/%3E%3Cline x1='12' y1='8' x2='12' y2='14'/%3E%3Cline x1='9' y1='11' x2='15' y2='11'/%3E%3C/svg%3E") !important;
+}
+.bpmn-process-container .djs-context-pad .entry[data-action="append-process"]:hover {
+    background-color: #2cb5b5 !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='14' rx='2'/%3E%3Cline x1='12' y1='8' x2='12' y2='14'/%3E%3Cline x1='9' y1='11' x2='15' y2='11'/%3E%3C/svg%3E") !important;
+}
+
+/* Add value chain — chevron card with a plus */
+.bpmn-process-container .djs-context-pad .entry[data-action="append-valuechain"] {
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: 18px 18px !important;
+    display:none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71'/%3E%3Cpath d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'/%3E%3C/svg%3E") !important;
+}
+.bpmn-process-container .djs-context-pad .entry[data-action="append-valuechain"]:hover {
+    background-color: #2cb5b5 !important;
+    display:none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71'/%3E%3Cpath d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'/%3E%3C/svg%3E") !important;
+}
+
 /* Suppress old emoji */
-.custom-open-process-icon { font-size: 0 !important; color: transparent !important; }
-.custom-open-process-icon::before { content: "" !important; font-size: 0 !important; }
+.custom-open-process-icon,
+.custom-append-process-icon,
+.custom-append-valuechain-icon { font-size: 0 !important; color: transparent !important; }
+.custom-open-process-icon::before,
+.custom-append-process-icon::before,
+.custom-append-valuechain-icon::before { content: "" !important; font-size: 0 !important; }
 
 /* ══════════════════════════════════════════════════════════
    HEADER BUTTONS

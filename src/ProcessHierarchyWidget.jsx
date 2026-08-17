@@ -299,7 +299,8 @@ const refreshOverlays = useCallback((modeler) => {
                 require("./components/CustomProcessRenderer"),
                 require("./components/CustomProcessRules"),
                 require("./components/CustomProcessContextPad"),
-                require("./components/CustomProcessNameSync")
+                require("./components/CustomProcessNameSync"),
+                require("./components/CustomProcessAutoPlace")
             ],
             moddleExtensions: {
                 process: require("./components/processModdle").processModdle
@@ -349,6 +350,14 @@ const refreshOverlays = useCallback((modeler) => {
                     if (!processId) return;
                     console.info("Context pad → Go to Process:", processId);
                     setPendingProcessId(processId);
+                });
+
+                // Appending onto a collapsed node would drop the new child into
+                // a hidden row — expand first so it is visible where it lands.
+                eventBus.on("process.ensure-expanded", (event) => {
+                    if (collapseStateRef.current.get(event.elementId) === true) {
+                        handleToggleCollapse(event.elementId, modeler);
+                    }
                 });
 
                 eventBus.on("element.dblclick", (event) => {
@@ -672,7 +681,11 @@ const refreshOverlays = useCallback((modeler) => {
 
     // ── Render ────────────────────────────────────────────────────────────────
     return (
-        <div className="process-hierarchy-widget" data-locked={isLockedByAnotherUser()}>
+        <div
+            className="process-hierarchy-widget"
+            data-locked={isLockedByAnotherUser()}
+            data-readonly={isReadOnly}
+        >
             <div className="process-hierarchy-header">
                 <h3>{libraryName?.value || "Process Hierarchy"}</h3>
 

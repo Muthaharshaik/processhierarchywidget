@@ -1,8 +1,11 @@
+import { createProcessShape } from "./createProcessShape";
+
 class CustomProcessPalette {
-    constructor(bpmnFactory, create, elementFactory, palette, translate, handTool, lassoTool, spaceTool, globalConnect) {
+    constructor(bpmnFactory, create, elementFactory, elementRegistry, palette, translate, handTool, lassoTool, spaceTool, globalConnect) {
         this.bpmnFactory = bpmnFactory;
         this.create = create;
         this.elementFactory = elementFactory;
+        this.elementRegistry = elementRegistry;
         this.translate = translate;
         this.handTool = handTool;
         this.lassoTool = lassoTool;
@@ -13,26 +16,14 @@ class CustomProcessPalette {
     }
 
     getPaletteEntries(element) {
-        const { bpmnFactory, create, elementFactory, translate, handTool, lassoTool, spaceTool, globalConnect } = this;
+        const { bpmnFactory, create, elementFactory, elementRegistry, translate, handTool, lassoTool, spaceTool, globalConnect } = this;
 
         function createProcess(processType) {
             return function (event) {
-                const businessObject = bpmnFactory.create("bpmn:SubProcess", {
-                    name: processType === "process" ? "New Process" : "New Value Chain"
-                });
-
-                businessObject.set("process:processType", processType);
-                businessObject.set("process:processName", businessObject.name);
-                businessObject.set("process:processId", `proc_${Date.now()}`);
-
-                const shape = elementFactory.createShape({
-                    type: "bpmn:SubProcess",
-                    businessObject: businessObject,
-                    width: 100,
-                    height: 80
-                });
-
-                create.start(event, shape);
+                create.start(
+                    event,
+                    createProcessShape(bpmnFactory, elementFactory, elementRegistry, processType)
+                );
             };
         }
 
@@ -103,6 +94,7 @@ CustomProcessPalette.$inject = [
     "bpmnFactory",
     "create",
     "elementFactory",
+    "elementRegistry",
     "palette",
     "translate",
     "handTool",
