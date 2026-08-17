@@ -396,12 +396,26 @@
 }
 
 /* ══════════════════════════════════════════════════════════
-   LOCKED STATE
+   READ-ONLY / LOCKED STATE
    ══════════════════════════════════════════════════════════ */
+/* No editing affordances. The canvas itself stays interactive: read-only users
+   still pan, zoom, collapse nodes and open a process. Editing is blocked in
+   the modeler by CustomReadOnlyModule, not by switching pointer events off. */
+.process-hierarchy-widget[data-readonly="true"] .djs-palette,
+.process-hierarchy-widget[data-readonly="true"] .djs-context-pad,
 .process-hierarchy-widget[data-locked="true"] .djs-palette,
 .process-hierarchy-widget[data-locked="true"] .djs-context-pad { display: none !important; }
+
+/* Drop the move cursor — nothing here can be dragged out of place. */
+.process-hierarchy-widget[data-readonly="true"] .djs-element .djs-hit-stroke,
+.process-hierarchy-widget[data-readonly="true"] .djs-element .djs-hit-click-stroke,
+.process-hierarchy-widget[data-readonly="true"] .djs-element .djs-hit-all,
+.process-hierarchy-widget[data-locked="true"] .djs-element .djs-hit-stroke,
+.process-hierarchy-widget[data-locked="true"] .djs-element .djs-hit-click-stroke,
+.process-hierarchy-widget[data-locked="true"] .djs-element .djs-hit-all { cursor: default; }
+
 .process-hierarchy-widget[data-locked="true"] .bpmn-process-container {
-    pointer-events: none; opacity: 0.8; cursor: not-allowed;
+    opacity: 0.8;
 }
 
 /* ══════════════════════════════════════════════════════════

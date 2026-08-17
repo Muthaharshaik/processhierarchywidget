@@ -291,17 +291,24 @@ const refreshOverlays = useCallback((modeler) => {
             modelerRef.current = null;
         }
 
+        const additionalModules = [
+            require("./components/CustomPaletteProvider"),
+            require("./components/CustomProcessPalette"),
+            require("./components/CustomProcessRenderer"),
+            require("./components/CustomProcessRules"),
+            require("./components/CustomProcessContextPad"),
+            require("./components/CustomProcessNameSync"),
+            require("./components/CustomProcessAutoPlace")
+        ];
+
+        // Must stay last — it overrides services registered by the modules above.
+        if (isReadOnly) {
+            additionalModules.push(require("./components/CustomReadOnlyModule"));
+        }
+
         const modeler = new BpmnModeler({
             container: containerRef.current,
-            additionalModules: [
-                require("./components/CustomPaletteProvider"),
-                require("./components/CustomProcessPalette"),
-                require("./components/CustomProcessRenderer"),
-                require("./components/CustomProcessRules"),
-                require("./components/CustomProcessContextPad"),
-                require("./components/CustomProcessNameSync"),
-                require("./components/CustomProcessAutoPlace")
-            ],
+            additionalModules,
             moddleExtensions: {
                 process: require("./components/processModdle").processModdle
             }
