@@ -37,21 +37,29 @@ const NS = {
     process: "http://lowcodelabs/schema/process"
 };
 
-// Everything Prime may have used to draw a process box. Events and gateways are
-// meaningless in a process hierarchy and are reported as skipped.
+/**
+ * Everything Prime may have used to draw a process box. Events and gateways are
+ * meaningless in a process hierarchy and are reported as skipped.
+ *
+ * Held lower-cased because every tag comparison in this file goes through
+ * localNameOf(): we are strict in what we emit (spec casing, see
+ * processModdle.js) and liberal in what we accept. Files downloaded before that
+ * tagAlias was in place — and XML already sitting in the Mendix database — carry
+ * <bpmn:SubProcess>, and those must keep importing.
+ */
 const ACTIVITY_TAGS = new Set([
     "task",
-    "subProcess",
-    "callActivity",
-    "userTask",
-    "manualTask",
-    "serviceTask",
-    "scriptTask",
-    "sendTask",
-    "receiveTask",
-    "businessRuleTask",
+    "subprocess",
+    "callactivity",
+    "usertask",
+    "manualtask",
+    "servicetask",
+    "scripttask",
+    "sendtask",
+    "receivetask",
+    "businessruletask",
     "transaction",
-    "adHocSubProcess"
+    "adhocsubprocess"
 ]);
 
 /**
@@ -60,6 +68,11 @@ const ACTIVITY_TAGS = new Set([
  * base tag Prime happens to use.
  */
 const VALUECHAIN_TAGS = new Set(Array.from(ACTIVITY_TAGS, tag => `${tag}2`));
+
+/** Every tag comparison goes through here, so casing never decides an import. */
+function localNameOf(element) {
+    return (element.localName || "").toLowerCase();
+}
 
 const isActivityTag   = localName => ACTIVITY_TAGS.has(localName) || VALUECHAIN_TAGS.has(localName);
 const isValueChainTag = localName => VALUECHAIN_TAGS.has(localName);
@@ -88,30 +101,41 @@ function sanitizeId(raw, fallback) {
 }
 
 /**
- * Namespace-aware lookup with a prefix-only fallback: some tools emit BPMN
- * without declaring the standard namespaces, which would make
- * getElementsByTagNameNS come back empty.
+ * Namespace-aware lookup that ignores tag casing, with a namespace-blind
+ * fallback: some tools emit BPMN without declaring the standard namespaces,
+ * which would make getElementsByTagNameNS come back empty.
+ *
+ * getElementsByTagNameNS is case-sensitive, so a mis-cased tag has to fall
+ * through to a scan rather than be reported as missing.
  */
 function findElements(doc, namespace, localName) {
-    const byNs = Array.from(doc.getElementsByTagNameNS(namespace, localName));
-    if (byNs.length) return byNs;
-    return Array.from(doc.getElementsByTagName("*")).filter(el => el.localName === localName);
+    const wanted = localName.toLowerCase();
+
+    const exact = Array.from(doc.getElementsByTagNameNS(namespace, localName));
+    if (exact.length) return exact;
+
+    const inNamespace = Array.from(doc.getElementsByTagNameNS(namespace, "*"))
+        .filter(el => localNameOf(el) === wanted);
+    if (inNamespace.length) return inNamespace;
+
+    return Array.from(doc.getElementsByTagName("*")).filter(el => localNameOf(el) === wanted);
 }
 
 function findAllActivities(doc) {
     let candidates = Array.from(doc.getElementsByTagNameNS(NS.bpmn, "*"));
     if (!candidates.length) candidates = Array.from(doc.getElementsByTagName("*"));
-    return candidates.filter(el => isActivityTag(el.localName));
+    return candidates.filter(el => isActivityTag(localNameOf(el)));
 }
 
 function findAllByLocalNames(doc, namespace, localNames) {
     let candidates = Array.from(doc.getElementsByTagNameNS(namespace, "*"));
     if (!candidates.length) candidates = Array.from(doc.getElementsByTagName("*"));
-    return candidates.filter(el => localNames.has(el.localName));
+    return candidates.filter(el => localNames.has(localNameOf(el)));
 }
 
 function firstChildByLocalName(element, localName) {
-    return Array.from(element.children).find(child => child.localName === localName) || null;
+    const wanted = localName.toLowerCase();
+    return Array.from(element.children).find(child => localNameOf(child) === wanted) || null;
 }
 
 function readNumber(value) {
@@ -144,7 +168,7 @@ function parseDocument(xmlString) {
         throw new Error("The file is not valid XML. Please select a BPMN file exported from Prime.");
     }
     const definitions = doc.documentElement;
-    if (!definitions || definitions.localName !== "definitions") {
+    if (!definitions || localNameOf(definitions) !== "definitions") {
         throw new Error("No <bpmn:definitions> found. This does not look like a BPMN file.");
     }
     return doc;
@@ -169,7 +193,7 @@ function collectDiWaypoints(doc) {
         const ref = edge.getAttribute("bpmnElement");
         if (!ref || map.has(ref)) return;
         const points = Array.from(edge.children)
-            .filter(child => child.localName === "waypoint")
+            .filter(child => localNameOf(child) === "waypoint")
             .map(child => ({ x: readNumber(child.getAttribute("x")), y: readNumber(child.getAttribute("y")) }))
             .filter(p => p.x !== null && p.y !== null);
         if (points.length >= 2) map.set(ref, points);
@@ -204,7 +228,7 @@ function collectNodes(doc, diBounds) {
             element: el,
             name: name || existingProcessName || uniqueId,
             processId:   existingProcessId || `proc_${uniqueId}`,
-            processType: existingProcessType || (isValueChainTag(el.localName) ? "valuechain" : "process"),
+            processType: existingProcessType || (isValueChainTag(localNameOf(el)) ? "valuechain" : "process"),
             isRoot: existingProcessId === "root",
             bounds: diBounds.get(originalId) || null,
             parentId: null,
@@ -220,19 +244,20 @@ function collectNodes(doc, diBounds) {
 }
 
 function countSkippedFlowNodes(doc) {
+    // Lower-cased for the same reason as ACTIVITY_TAGS.
     const skippable = new Set([
-        "startEvent",
-        "endEvent",
-        "intermediateCatchEvent",
-        "intermediateThrowEvent",
-        "boundaryEvent",
-        "exclusiveGateway",
-        "inclusiveGateway",
-        "parallelGateway",
-        "eventBasedGateway",
-        "complexGateway",
-        "dataObjectReference",
-        "dataStoreReference"
+        "startevent",
+        "endevent",
+        "intermediatecatchevent",
+        "intermediatethrowevent",
+        "boundaryevent",
+        "exclusivegateway",
+        "inclusivegateway",
+        "parallelgateway",
+        "eventbasedgateway",
+        "complexgateway",
+        "dataobjectreference",
+        "datastorereference"
     ]);
     return findAllByLocalNames(doc, NS.bpmn, skippable).length;
 }
@@ -318,7 +343,7 @@ function collectEdges(doc, byOriginalId) {
         if (node.parentId) return;
         let ancestor = node.element.parentElement;
         while (ancestor) {
-            if (isActivityTag(ancestor.localName)) {
+            if (isActivityTag(localNameOf(ancestor))) {
                 const parent = byOriginalId.get(ancestor.getAttribute("id"));
                 if (parent && parent.id !== node.id &&
                     addEdge(`SequenceFlow_nested_${nestedLinks}`, parent, node)) {
