@@ -479,6 +479,7 @@ const refreshOverlays = useCallback((modeler) => {
             .then(({ xml }) => {
                 processXML?.setValue(xml);
                 onSaveXML.execute();
+                modelerRef.current?.get("commandStack").clear();
             })
             .catch(err => {
                 console.error("Error exporting BPMN XML:", err);
