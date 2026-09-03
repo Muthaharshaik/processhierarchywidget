@@ -36,6 +36,10 @@ export function ProcessHierarchyWidget(props) {
     const fileInputRef = useRef(null);
     const [pendingImport, setPendingImport] = useState(null);
 
+    // Delete of a process that already exists in the library waits here until
+    // the user confirms — see CustomProcessDeleteConfirm.
+    const [pendingDelete, setPendingDelete] = useState(null);
+
     // Collapse state: Map<elementId, boolean> — true = collapsed
     const collapseStateRef = useRef(new Map());
 
@@ -298,7 +302,8 @@ const refreshOverlays = useCallback((modeler) => {
             require("./components/CustomProcessRules"),
             require("./components/CustomProcessContextPad"),
             require("./components/CustomProcessNameSync"),
-            require("./components/CustomProcessAutoPlace")
+            require("./components/CustomProcessAutoPlace"),
+            require("./components/CustomProcessDeleteConfirm")
         ];
 
         // Must stay last — it overrides services registered by the modules above.
@@ -332,6 +337,14 @@ const refreshOverlays = useCallback((modeler) => {
 
                 // Draw overlay toggle buttons for all nodes with children
                 refreshOverlays(modeler);
+
+                // Everything loaded from the library is already stored, so
+                // deleting it has to be confirmed.
+                modeler.get("customProcessDeleteConfirm").markCanvasAsSaved();
+
+                eventBus.on("process.confirm-delete", (event) => {
+                    setPendingDelete({ processNames: event.processNames });
+                });
 
                 // Re-draw overlays whenever diagram structure changes
                 eventBus.on("elements.changed",  () => refreshOverlays(modeler));
@@ -431,6 +444,7 @@ const refreshOverlays = useCallback((modeler) => {
 
         // Reset collapse state when fresh XML is loaded
         collapseStateRef.current = new Map();
+        setPendingDelete(null);
 
         modelerRef.current
             .importXML(processXML.value)
@@ -438,6 +452,7 @@ const refreshOverlays = useCallback((modeler) => {
                 const canvas = modelerRef.current.get("canvas");
                 canvas.zoom("fit-viewport");
                 refreshOverlays(modelerRef.current);
+                modelerRef.current.get("customProcessDeleteConfirm").markCanvasAsSaved();
             })
             .catch(err => {
                 console.error("Error updating BPMN diagram:", err);
@@ -480,6 +495,9 @@ const refreshOverlays = useCallback((modeler) => {
                 processXML?.setValue(xml);
                 onSaveXML.execute();
                 modelerRef.current?.get("commandStack").clear();
+                // Processes added in this session are now stored in the library,
+                // so removing them needs confirming from here on.
+                modelerRef.current?.get("customProcessDeleteConfirm").markCanvasAsSaved();
             })
             .catch(err => {
                 console.error("Error exporting BPMN XML:", err);
@@ -534,6 +552,15 @@ const refreshOverlays = useCallback((modeler) => {
         const commandStack = modelerRef.current.get("commandStack");
         if (commandStack.canRedo()) commandStack.redo();
     }, [isReadOnly]);
+
+    // ── Delete confirmation ───────────────────────────────────────────────────
+    const resolveDelete = useCallback((confirmed) => {
+        const gate = modelerRef.current?.get("customProcessDeleteConfirm");
+        setPendingDelete(null);
+        if (!gate) return;
+        if (confirmed) gate.confirm();
+        else gate.cancel();
+    }, []);
 
     // ── Unsaved warning ───────────────────────────────────────────────────────
     const showUnsavedWarning = () => {
@@ -643,6 +670,7 @@ const refreshOverlays = useCallback((modeler) => {
         setPendingImport(null);
 
         collapseStateRef.current = new Map();
+        setPendingDelete(null);
         // Keep the ref pointing at what is actually on the canvas, so the
         // Mendix-XML effect does not treat the old value as a fresh update and
         // re-import over the file the user just brought in.
@@ -772,6 +800,39 @@ const refreshOverlays = useCallback((modeler) => {
                             </button>
                             <button className="import-btn-confirm" onClick={applyImport}>
                                 Import
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {pendingDelete && (
+                <div className="import-confirm-backdrop">
+                    <div className="import-confirm">
+                        <div className="import-confirm-title">
+                            {pendingDelete.processNames.length > 1
+                                ? "Delete these processes?"
+                                : "Delete this process?"}
+                        </div>
+                        <div className="import-confirm-body">
+                            <div className="import-confirm-file">
+                                {pendingDelete.processNames.join(", ")}
+                            </div>
+                            <div>
+                                Deleting {pendingDelete.processNames.length > 1 ? "these processes" : "this process"} may
+                                delete all {pendingDelete.processNames.length > 1 ? "their" : "its"} related
+                                processmap.
+                            </div>
+                            <div className="import-confirm-warn">
+                                Nothing is removed from the library until you press Save.
+                            </div>
+                        </div>
+                        <div className="import-confirm-actions">
+                            <button className="import-btn-cancel" onClick={() => resolveDelete(false)}>
+                                Cancel
+                            </button>
+                            <button className="import-btn-danger" onClick={() => resolveDelete(true)}>
+                                Delete
                             </button>
                         </div>
                     </div>

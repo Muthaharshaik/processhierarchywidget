@@ -91,6 +91,9 @@ class CustomProcessContextPad {
                 }
             },
 
+            // CustomProcessDeleteConfirm wraps removeElements, so a node that is
+            // already in the saved library puts up a confirmation dialog from
+            // here without this entry having to know about it.
             'delete': {
                 group: 'edit',
                 className: 'bpmn-icon-trash',

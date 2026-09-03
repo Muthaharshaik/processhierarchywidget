@@ -531,6 +531,14 @@
 }
 .import-btn-confirm:hover { background: #249c9c; }
 
+/* Destructive confirm — same dialog shell, delete-red action */
+.import-btn-danger {
+    background: #d64545;
+    color: #ffffff;
+    border: 1px solid #d64545;
+}
+.import-btn-danger:hover { background: #bf3a3a; }
+
 /* ── States ── */
 .process-hierarchy-widget.loading { opacity: 0.6; pointer-events: none; }
 .process-hierarchy-error {
