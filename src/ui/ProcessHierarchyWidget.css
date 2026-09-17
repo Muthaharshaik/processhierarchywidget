@@ -15,7 +15,7 @@
 .process-hierarchy-widget {
     position: relative;   /* anchors .import-confirm-backdrop */
     width: 100%;
-    height: calc(100vh - 145px);
+    height: calc(100vh - 150px);
     display: flex;
     flex-direction: column;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
