@@ -603,6 +603,33 @@ const refreshOverlays = useCallback((modeler) => {
             });
     }, [libraryName]);
 
+    // ── Ctrl/Cmd + S → download the BPMN ──────────────────────────────────────
+    // Held in a ref so the listener below is registered once per modeler, rather
+    // than being torn down and re-added every time exportBaseName changes.
+    const downloadBPMNRef = useRef(downloadBPMN);
+    useEffect(() => { downloadBPMNRef.current = downloadBPMN; }, [downloadBPMN]);
+
+    // diagram-js binds the keyboard module to the canvas SVG (which carries
+    // tabindex="0"), so this only fires while the diagram has focus — Ctrl+S
+    // keeps its normal browser meaning everywhere else on the page.
+    useEffect(() => {
+        const keyboard = modelerRef.current?.get("keyboard", false);
+        if (!keyboard) return;
+
+        const handler = ({ keyEvent }) => {
+            if (!(keyEvent.ctrlKey || keyEvent.metaKey) || keyEvent.altKey) return false;
+            if (String(keyEvent.key).toLowerCase() !== "s") return false;
+
+            keyEvent.preventDefault();
+            downloadBPMNRef.current();
+            return true;
+        };
+
+        keyboard.addListener(handler);
+        return () => keyboard.removeListener(handler);
+        // The modeler — and with it the keyboard instance — is rebuilt on this dep.
+    }, [isReadOnly]);
+
     // ── Info overlay (import results) ─────────────────────────────────────────
     const showInfoOverlay = useCallback((title, lines, timeout = 6000) => {
         if (!containerRef.current) return;
